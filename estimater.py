@@ -31,7 +31,6 @@ class EM:
     def __calc_likelihood(self):
         likelihood = np.zeros((self.N, self.K))
         for k in range(self.K):
-            print(self.sigma[k])
             likelihood[:, k] = [self.pi[k]*multivariate_normal.pdf(xn, self.mu[k], self.sigma[k]) for xn in self.x]
 
         return likelihood
@@ -44,15 +43,13 @@ class EM:
         S_k1 = np.array([np.sum(self.gamma[:,k]) for k in range(self.K)])
         S_kx = np.array([np.sum((self.gamma[:,k]*self.x.T).T, axis=0) for k in range(self.K)])
         xx = np.zeros((self.N, self.dim_x, self.dim_x))
-        for k in range(self.K):
-            x_k = self.x[k].reshape(self.dim_x,1)
-            xx[k] = x_k@x_k.T
+        for n in range(self.N):
+            x_k = self.x[n].reshape(self.dim_x,1)
+            xx[n] = x_k@x_k.T
         S_kxx = np.array([np.sum((self.gamma[:,k]*xx.T).T, axis=0) for k in range(self.K)])
 
         self.pi = S_k1/self.N
+        self.mu = (S_kx.T/S_k1).T
         self.sigma = np.zeros((self.K, self.dim_x, self.dim_x))
         for k in range(self.K):
-            self.sigma[k] = np.linalg.inv(S_kxx[k]/S_k1[k] - self.mu[k].reshape(self.dim_x,1)@self.mu[k].reshape(self.dim_x,1).T)
-            #self.sigma[k] = S_kxx[k]/S_k1[k] - self.mu[k].reshape(self.dim_x,1)@self.mu[k].reshape(self.dim_x,1).T
-        #self.sigma = np.linalg.inv(self.sigma)
-        self.mu = (S_kx.T/S_k1).T
+            self.sigma[k] = S_kxx[k]/S_k1[k] - self.mu[k].reshape(self.dim_x,1)@self.mu[k].reshape(self.dim_x,1).T
